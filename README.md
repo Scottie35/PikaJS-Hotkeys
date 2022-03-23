@@ -69,6 +69,13 @@ If you prevent keystroke event bubbling, the key event will not be triggered by 
 	1. If it does, your callback inserts its own space in the content, then cleans things up (for example). Callback returns *false* to prevent the browser from entering its own space character.
 	2. If it does NOT, your callback simply returns *true*, and the browser handles insertion of the space character.
 
+To capture keystrokes for the entire browser window (i.e. NOT in an input field or contentEditable), do this:
+
+	$(document)._on('keydown', 'body', "ctrl+a", function() {
+	  // DO SOMETHING HERE!
+	  return false;
+	});
+
 All other non-keystroke events are handled as usual by `._on`.
 
 Recall that in PikaJS, `$.Bubble` = *false* by default. In your code, you can change this to *true* if you want PikaJS to work more like jQuery and allow event bubbling by default.
