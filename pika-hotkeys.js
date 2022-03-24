@@ -1,5 +1,5 @@
 /** 
- *	@license PikaJS Hotkeys plugin 1.0
+ *	@license PikaJS Hotkeys plugin 1.0.1
  * 	Based on jQuery hotkeys by John Resig: https://github.com/jeresig/jquery.hotkeys
  *	© 2022 Scott Ogrin & Quantum Future Group, Inc.
  * 	MIT License
@@ -8,7 +8,7 @@
 (function($) {
 
   $.hotkeys = {
-    Version: "1.0",
+    Version: "1.0.1",
     specialKeys: {
       8: "backspace",
       9: "tab",
@@ -151,9 +151,9 @@
 		_on: function(event, expr, fnkey, stopbublfn, stopbubl) {
 			// Prevent attaching if parent doesn't exist (so we can load all handlers on all pages if we want)
 			if ($.t(this[0])) { return; }
-			var special = false;
+			var special = false, evtonly = event.split('.')[0], evtname = event.split('.')[1];
 			// Are we doing event keydown, keyup, or keypress?
-			if (event == 'keydown' || event == 'keypress' || event == 'keyup') {
+			if (evtonly == 'keydown' || evtonly == 'keypress' || evtonly == 'keyup') {
 				// Yes: Do keyboard event  (4 or 5 params) - By default we do keystroke callback return value = !stopbubl
 				stopbubl = ($.t(stopbubl) ? null : stopbubl);
 			} else {
@@ -161,19 +161,17 @@
 				stopbubl = ($.t(stopbublfn) ? (!$.Bubble) : stopbublfn);
 			}
 			// Change mouseenter->mousover, mouseleave->mouseout (with special checks below)
-			if (event == 'mouseenter') {
+			if (evtonly == 'mouseenter' || evtonly == 'mouseleave') {
 				special = true;
-				event = 'mouseover';
-			} else if (event == 'mouseleave') {
-				special = true;
-				event = 'mouseout';
+				evtonly = (evtonly == 'mouseenter') ? 'mouseover' : 'mouseout';
 			}
+			if (special) { event = evtonly + ($.t(evtname) ? '' : '.' + evtname); }
 			// Attach to PARENT, filter for child
 			this.on(event, function(evt) {
 				var cthis = this;
 				if (evt.target && $(evt.target).is(expr)) {
 					// Are we doing keypress?
-					if (event == 'keydown' || event == 'keypress' || event == 'keyup') {
+					if (evtonly == 'keydown' || evtonly == 'keypress' || evtonly == 'keyup') {
 						// Include hotkeys logic
 						if (keyHandler(evt, fnkey, cthis)) {
 							// We're calling our handler... For bubble, we have 3 cases (see above).
