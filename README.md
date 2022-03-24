@@ -1,6 +1,6 @@
 # PikaJS-Hotkeys
 
-Hotkeys plugin for PikaJS that is only **1.99KB** minified!!
+Hotkeys plugin for PikaJS that is only **2KB** minified!!
 
 ## What is PikaJS?
 
