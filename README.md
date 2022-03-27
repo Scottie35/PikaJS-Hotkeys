@@ -2,6 +2,8 @@
 
 Hotkeys plugin for PikaJS that is only **2KB** minified!!
 
+[Try the PikaJS Demo!](https://pikajs.com/)
+
 ## What is PikaJS?
 
 [PikaJS](https://github.com/Scottie35/PikaJS) is a client-side scripting library like jQuery, but 7 times smaller, faster, and more efficient.
