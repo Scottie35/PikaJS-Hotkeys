@@ -1,5 +1,5 @@
 /** 
- *	@license PikaJS Hotkeys plugin 1.1.0
+ *	@license PikaJS Hotkeys plugin 1.2.0
  * 	Based on jQuery hotkeys by John Resig: https://github.com/jeresig/jquery.hotkeys
  *	© 2022-2023 Scott Ogrin & Quantum Future Group, Inc.
  * 	MIT License
@@ -8,7 +8,7 @@
 (function($) {
 
   $.hotkeys = {
-    Version: "1.1.0",
+    Version: "1.2.0",
     specialKeys: {
       8: "backspace",
       9: "tab",
@@ -172,7 +172,7 @@
 				// This allows delegated mouseenter/leave listeners since normally, they don't bubble
 				// In short, we do NOT fire the event if we're dealing with entering or leaving a child element in some cases
 				var et = evt.target, cthis = this;
-				if (et && ($(et).is(expr) || $(expr).contains(et) || (special && (!evt[RelT] || (evt[RelT] !== $(expr)[0] && !$(expr).contains(evt[RelT])))))) {
+				if (et && ($(et).is(expr) || $(expr).contains(et)) && (!special || (special && (!evt[RelT] || (evt[RelT] !== et && !$(et).contains(evt[RelT])))))) {
 					// Are we doing keypress?
 					if (evtarr[0] == Kd || evtarr[0] == Kp || evtarr[0] == Ku) {
 						// Include hotkeys logic
