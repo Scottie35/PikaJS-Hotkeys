@@ -1,14 +1,14 @@
 /** 
- *	@license PikaJS Hotkeys plugin 1.0.1
+ *	@license PikaJS Hotkeys plugin 1.1.0
  * 	Based on jQuery hotkeys by John Resig: https://github.com/jeresig/jquery.hotkeys
- *	© 2022 Scott Ogrin & Quantum Future Group, Inc.
+ *	© 2022-2023 Scott Ogrin & Quantum Future Group, Inc.
  * 	MIT License
  */
 
 (function($) {
 
   $.hotkeys = {
-    Version: "1.0.1",
+    Version: "1.1.0",
     specialKeys: {
       8: "backspace",
       9: "tab",
@@ -151,9 +151,9 @@
 		_on: function(event, expr, fnkey, stopbublfn, stopbubl) {
 			// Prevent attaching if parent doesn't exist (so we can load all handlers on all pages if we want)
 			if ($.t(this[0])) { return; }
-			var special = false, evtonly = event.split('.')[0], evtname = event.split('.')[1];
+			var special = false, evtarr = event.split(/\.(.+)/), Me = 'mouseenter', Kd = 'keydown', Kp = 'keypress', Ku = 'keyup', RelT = 'relatedTarget';
 			// Are we doing event keydown, keyup, or keypress?
-			if (evtonly == 'keydown' || evtonly == 'keypress' || evtonly == 'keyup') {
+			if (evtarr[0] == Kd || evtarr[0] == Kp || evtarr[0] == Ku) {
 				// Yes: Do keyboard event  (4 or 5 params) - By default we do keystroke callback return value = !stopbubl
 				stopbubl = ($.t(stopbubl) ? null : stopbubl);
 			} else {
@@ -161,24 +161,27 @@
 				stopbubl = ($.t(stopbublfn) ? (!$.Bubble) : stopbublfn);
 			}
 			// Change mouseenter->mousover, mouseleave->mouseout (with special checks below)
-			if (evtonly == 'mouseenter' || evtonly == 'mouseleave') {
+			if (evtarr[0] == Me || evtarr[0] == 'mouseleave') {
 				special = true;
-				evtonly = (evtonly == 'mouseenter') ? 'mouseover' : 'mouseout';
+				event = ((evtarr[0] == Me) ? 'mouseover' : 'mouseout') + ($.t(evtarr[1]) ? '' : '.' + evtarr[1]);
 			}
-			if (special) { event = evtonly + ($.t(evtname) ? '' : '.' + evtname); }
 			// Attach to PARENT, filter for child
 			this.on(event, function(evt) {
-				var cthis = this;
-				if (evt.target && $(evt.target).is(expr)) {
+				// Either we have normal event, or we need to override mouseenter/leave to make them more useful:
+				// We make mouseenter/leave into over/out AND and do some special checking
+				// This allows delegated mouseenter/leave listeners since normally, they don't bubble
+				// In short, we do NOT fire the event if we're dealing with entering or leaving a child element in some cases
+				var et = evt.target, cthis = this;
+				if (et && ($(et).is(expr) || $(expr).contains(et) || (special && (!evt[RelT] || (evt[RelT] !== $(expr)[0] && !$(expr).contains(evt[RelT])))))) {
 					// Are we doing keypress?
-					if (evtonly == 'keydown' || evtonly == 'keypress' || evtonly == 'keyup') {
+					if (evtarr[0] == Kd || evtarr[0] == Kp || evtarr[0] == Ku) {
 						// Include hotkeys logic
 						if (keyHandler(evt, fnkey, cthis)) {
 							// We're calling our handler... For bubble, we have 3 cases (see above).
 							// This is needed so that on keystroke, we can do just our handler, just browser-based keystroke, or both
 							// Sometimes, we want our callback to happen BEFORE browser-based keystroke action, like for a WYSIWYG
 							// editor. This allows that!
-							// 4th param is f():
+							// 4th param is f(), 5th is optional stopbubl:
 							if (stopbubl == null) {
 								// Default is we use the return value of the callback for bubble cancel
 								// return true = ALLOW bubble
@@ -192,17 +195,16 @@
 								stopbublfn.call($(evt.target), evt);
 							}
 						}
-					} else if (!special || (special && !evt.relatedTarget || (evt.relatedTarget !== evt.target && !evt.target.contains(evt.relatedTarget)))) {
-						// Either have normal event, or we need to override mouse enter/leave to make them more useful:
-						// We make mouseenter/leave into over/out AND and do some special checking
-						// This allows delegated mouseenter/leave listeners since normally, they don't bubble
-						// In short, we do NOT fire the event if we're dealing with entering or leaving a child element in some cases
+					} else {
+						// NOT keypress, so 3-4 params total for _on
+						// 4th param is stopbublfn, which we set to stopbubl above
 						if (stopbubl) { $.S(evt); }
 						// 3rd param is f():
-						fnkey.call($(evt.target), evt); // func will have evt, this = $()	
+						fnkey.call((special || $(et).is(expr)) ? $(et) : $(et).up(expr), evt); // func will have evt, this = $()
 					}
 				}
 			});
+			return this;
 		}
 	});
 
