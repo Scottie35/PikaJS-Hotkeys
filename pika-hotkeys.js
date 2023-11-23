@@ -1,5 +1,5 @@
 /** 
- *	@license PikaJS Hotkeys plugin 1.2.0
+ *	@license PikaJS Hotkeys plugin 1.3.0
  * 	Based on jQuery hotkeys by John Resig: https://github.com/jeresig/jquery.hotkeys
  *	© 2022-2023 Scott Ogrin & Quantum Future Group, Inc.
  * 	MIT License
@@ -8,7 +8,7 @@
 (function($) {
 
   $.hotkeys = {
-    Version: "1.2.0",
+    Version: "1.3.0",
     specialKeys: {
       8: "backspace",
       9: "tab",
@@ -99,10 +99,12 @@
   }
 
   // Due to self-executing function, this is 'private':
-  function keyHandler(event, key, cthis) {
+  function keyHandler(event, key) {
+  	// key = i.e. "ctrl+b" OR it can be "space, ctrl+b, w" (comma + space between multiple keys REQUIRED)
     var special = event.type !== "keypress" && $.hotkeys.specialKeys[event.which],
       character = String.fromCharCode(event.which).toLowerCase(),
       modif = "",
+      keys = key.split(', '),
       possible = {};
 
     var speshulKeys = ["alt", "ctrl", "shift"];
@@ -134,7 +136,12 @@
 	      }
       }
     }
-		return !$.t(possible[key]) ? true : false;
+		for (var j=0, m=keys.length; j<m; j++) {
+			if (!$.t(possible[keys[j]])) {
+				return [true, keys[j]];
+			}
+		}
+		return [false, null];
   }
 
 	$.extend($.fn, {
@@ -143,11 +150,12 @@
 		// For intercepting key events, there is an extra param
 		// fnkey = f() OR key; If 5 params given, fnkey = key AND stopbublfn = f()
 		// Ex:
-		//		$('#mydiv')._on('mousedown', '#myspan', function() {Blah...});
-		//		$('#mydiv')._on('mousedown', '#myspan', function() {Blah...}, false);						// Allow bubble!
-		//		$('#mydiv')._on('keydown', '#myspan', 'ctrl+z', function() {Blah...});					// Ctrl-Z keydown, bubble based on return value
-		//		$('#mydiv')._on('keydown', '#myspan', 'ctrl+z', function() {Blah...}, false); 	// Ctrl-Z keydown, bubbles!
-		//		$('#mydiv')._on('keydown', '#myspan', 'ctrl+z', function() {Blah...}, true); 		// Ctrl-Z keydown, never bubbles!
+		//		$('#mydiv')._on('mousedown', '#myspan', function(evt) {Blah...});
+		//		$('#mydiv')._on('mousedown', '#myspan', function(evt) {Blah...}, false);								// Allow bubble!
+		//		$('#mydiv')._on('keydown', '#myspan', 'ctrl+z', function(evt, key) {Blah...});					// Ctrl-Z keydown, bubble based on return value
+		//		$('#mydiv')._on('keydown', '#myspan', 'ctrl+z, space', function(evt, key) {Blah...});		// Ctrl-Z AND space keydown, bubble based on return value
+		//		$('#mydiv')._on('keydown', '#myspan', 'ctrl+z', function(evt, key) {Blah...}, false); 	// Ctrl-Z keydown, bubbles!
+		//		$('#mydiv')._on('keydown', '#myspan', 'ctrl+z', function(evt, key) {Blah...}, true); 		// Ctrl-Z keydown, never bubbles!
 		_on: function(event, expr, fnkey, stopbublfn, stopbubl) {
 			// Prevent attaching if parent doesn't exist (so we can load all handlers on all pages if we want)
 			if ($.t(this[0])) { return; }
@@ -171,12 +179,13 @@
 				// We make mouseenter/leave into over/out AND and do some special checking
 				// This allows delegated mouseenter/leave listeners since normally, they don't bubble
 				// In short, we do NOT fire the event if we're dealing with entering or leaving a child element in some cases
-				var et = evt.target, cthis = this;
+				var et = evt.target, res;
 				if (et && ($(et).is(expr) || $(expr).contains(et)) && (!special || (special && (!evt[RelT] || (evt[RelT] !== et && !$(et).contains(evt[RelT])))))) {
 					// Are we doing keypress?
 					if (evtarr[0] == Kd || evtarr[0] == Kp || evtarr[0] == Ku) {
 						// Include hotkeys logic
-						if (keyHandler(evt, fnkey, cthis)) {
+						res = keyHandler(evt, fnkey);
+						if (res[0]) {
 							// We're calling our handler... For bubble, we have 3 cases (see above).
 							// This is needed so that on keystroke, we can do just our handler, just browser-based keystroke, or both
 							// Sometimes, we want our callback to happen BEFORE browser-based keystroke action, like for a WYSIWYG
@@ -186,13 +195,13 @@
 								// Default is we use the return value of the callback for bubble cancel
 								// return true = ALLOW bubble
 								// return false = STOP bubble
-								if (stopbublfn.call($(evt.target), evt) === false) { // func will have evt, this = $()
+								if (stopbublfn.call($(evt.target), evt, res[1]) === false) { // func will have this = $() & f(evt, keystroke)
 									$.S(evt);
 								}
 							} else {
 								// stopbubl was passed in, so use it instead
 								if (stopbubl) { $.S(evt); }
-								stopbublfn.call($(evt.target), evt);
+								stopbublfn.call($(evt.target), evt, res[1]);
 							}
 						}
 					} else {
@@ -200,7 +209,7 @@
 						// 4th param is stopbublfn, which we set to stopbubl above
 						if (stopbubl) { $.S(evt); }
 						// 3rd param is f():
-						fnkey.call((special || $(et).is(expr)) ? $(et) : $(et).up(expr), evt); // func will have evt, this = $()
+						fnkey.call((special || $(et).is(expr)) ? $(et) : $(et).up(expr), evt); // func will have this = $() & f(evt) 
 					}
 				}
 			});
