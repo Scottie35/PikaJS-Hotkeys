@@ -22,12 +22,21 @@ Hotkeys is very small and very easy to use:
 
 Hotkeys overrides the default `._on` method in PikaJS. You simply use it like this:
 
-    $('#mydiv')._on('mousedown', '#myspan', function() {...});
+    $('#mydiv')._on('mousedown', '#myspan', function(event) {...});
     $('#mydiv')._on('mousedown', '#myspan', function() {...}, false);   // Allow bubble!
     $('#mydiv')._on('keydown', '#myspan', 'ctrl+z', function() {...});  // Ctrl-Z keydown, bubble based on return value
     $('#mydiv')._on('keydown', '#myspan', 'backspace', function() {...}, false);  // Backspace keydown, bubbles!
     $('#mydiv')._on('keydown', '#myspan', 'space', function() {...}, true);   // Space keydown, never bubbles!
+
+You can also pass in multiple keystrokes and do something different for each keystroke in your callback function:
 		
+    $('#mydiv')._on('keydown', '#myspan', 'ctrl+z, space, ctrl+b', function(event, keystroke) {
+      // Use 'keystroke' var to do something for 'ctrl+z', 'space', etc.
+      // Can also access the default first var, 'event'
+    });
+		
+Multiple keystrokes means that if you want to do something for 10 keys, you no longer need 10 different calls to `._on`. All you need is ONE call with 10 keystrokes listed. Note that multiple keystrokes MUST be separated by a comma followed by a space.
+
 This is the one you'll use most often:
 		
     $('#mydiv')._on('keydown', '#myspan', 'ctrl+z', function() {...});    // Bubble based on function() return value
